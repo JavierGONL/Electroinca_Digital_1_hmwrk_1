@@ -26,7 +26,7 @@ la respuesta de todos los módulos antes de habilitar el menú.
 
 ```mermaid
 flowchart TD
-    A[Encender consola] --> C
+    A[Encender consola]
     A --> D
     D[Mostrar intro e Iniciar Verificaciones]
     D --> E[Probar memoria BRAM]
