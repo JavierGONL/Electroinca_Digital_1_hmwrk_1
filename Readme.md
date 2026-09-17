@@ -1,6 +1,4 @@
-# Proyecto Consola Digital - Arquitectura y Flujo
-
-Este repositorio contiene la arquitectura de hardware para el desarrollo de una consola interactiva, basada en la integración de módulos periféricos y de procesamiento.
+# QuadGB
 
 ## Diagrama de Flujo Principal
 
@@ -8,14 +6,15 @@ El sistema se divide en tres estados principales: Verificación, Menu principal 
 
 ```mermaid
 flowchart TD
-    A(Inicio) --> B[Intro/verificacion de sistemas]
-    B --> C{Menu Start}
-    C <--> I[Juegos]
-    C --> E{Opciones} -->D
-    E --> G
-    D[Salir] --> C
-    G[Controles] --> F[Volver] --> E
-    E --> H[Brillo] --> F
+    A[Inicio] --> B
+    B[Inicializar display y entradas] --> C
+    C[Intro y verificacion de sistemas]
+    C --> D[Entrada PS2 del usuario ]
+    D --> E{Menu Start}
+    E --> I[Juego]
+    E -->|Opciones| F[Menu de configuracion]
+    I --> |Termino juego| E
+    F --> H[Modificar brillo o controles] -->E
 ```
 
 ## Diagrama de flujo de la consola
@@ -29,7 +28,7 @@ flowchart TD
     A[Encender consola]
     A --> D
     D[Mostrar intro e Iniciar Verificaciones]
-    D --> E[Probar memoria BRAM]
+    D --> E[Probar memorias]
     D --> F[Probar perifericos PS2]
     D --> G[Probar salidas A/V]
     E --> H{Todas las pruebas responden}
@@ -38,24 +37,26 @@ flowchart TD
     J --> K{Reiniciar consola}
     K -->|Si| A
     K -->|No| L[Esperar]
-    H -->|Si| M[Menu principal]
-    M --> N{Seleccion del usuario}
-    N -->|Jugar| O[Cargar juego]
-    N -->|Opciones| P[Configurar consola]
-    O --> Q[Ejecutar game loop]
-    Q --> R{Terminar juego}
+    H -->|Si| M[Input de Validacion Control]
+    M --> N{Menu Principal}
+    N -->|Jugar| O[Solicitar recursos del juego]
+    N -->|Opciones| P[Configurar consola por I2C]
+    O --> Q[Cargar datos de Flash a RAM]
+    Q --> R[Inicializar estado del juego]
+    R --> S[Ejecutar game loop]
+    S --> T{Terminar juego}
     F --> H
     G --> H
     P --> M
-    R -->|No| Q
-    R -->|Si| M
+    T -->|No| S
+    T -->|Si| M
 ```
 
 ## Verificaciones de los sistemas al encender
 
-Al encender el sistema, se ejecuta un diagnóstico de hardware mientras se carga la secuencia una intro tipo ps3.
+Al encender el sistema, se ejecuta un diagnostico al hardware mientras se carga la secuencia una intro tipo ps3.
 
-[Ejemplo](https://www.youtube.com/watch?v=Ywh-aIfEcew)
+[Ejemplo intro](https://www.youtube.com/watch?v=Ywh-aIfEcew)
 
 La idea es que mientras se este ejecutando esta intro, se ejecuten test de todos los modulos:
 
@@ -67,26 +68,7 @@ La idea es que mientras se este ejecutando esta intro, se ejecuten test de todos
 
 cada test lo hace el grupo correspondiente y en el software al iniciarse simplemente se llaman.
 
-### Manejo de errores
-
-Cada función debe tener manejo de errores. El sistema central espera un output
-de cada módulo; si no lo recibe, considera que el módulo falló, detiene la
-operación actual y muestra una pantalla de error.
-
-```mermaid
-flowchart TD
-    A[Inicio de función] --> B{El modulo devuelve output}
-    B -->|Sí| C[Continuar operacion]
-    B -->|No| D[Registrar tipo y código del error]
-    D --> E[Detener operación actual]
-    E --> F[Pantalla azul: Ocurrio un error]
-    F --> G[Mostrar descripción del error]
-    G --> H{Reiniciar}
-    H -->|Si| I[Reiniciar consola]
-    H -->|No| J[esperar que el usuario haga algo]
-```
-
-## Menu Principal y Configuracion
+## Menu Principal
 
 
 ### Menu
@@ -96,37 +78,25 @@ Interfaz de usuario en estado de espera para seleccionar juegos o ajustar parám
     <img src="Imagenes/Menu_Principal.png" alt="Menú principal">
 </p>
 
-### Configuracion
 
-<p align="center">
-    <img src="Imagenes/Menu_Opciones.png" alt="Menú principal">
-</p>
-
-Interfaz Gráfica: Renderizado de menú estático a cargo del display driver (Grupo J).
-
-Navegación: El controlador PS/2 (Grupo E) decodifica las pulsaciones del usuario para mover el cursor y seleccionar opciones.
-
-Ajustes: Modificación de parámetros físicos (ej. brillo, volumen) transmitidos a la placa mediante I2C (Grupo H).
 
 ## Juego (Game Loop)
 
 ```mermaid
 flowchart TD
-    A[Seleccionar juego] --> B[Cargar recursos]
-    B --> C[Inicializar juego]
-    C --> D[Loop de juego ]
-
-    D --> E[Leer entradas]
-    E --> F[Actualizar estado]
-    F --> G[Procesar física]
-    G --> H[Detectar colisiones]
-    H --> I[Actualizar gráficos]
-    I --> J[Actualizar audio]
-
-    J --> K{¿Terminar?}
-
-    K -->|No| E
-    K -->|Sí| L[Regresar al menú]
+    A[Seleccionar juego] --> B[Solicitar recursos a memoria Flash]
+    B --> C[Transferir recursos de Flash a RAM]
+    C --> D[Inicializar estado y variables del juego]
+    D --> E[Esperar sincronizacion de video]
+    E --> F[Leer eventos de PS2 y otros controles]
+    F --> G[Actualizar estado del jugador y del mundo]
+    G --> H[Procesar fisica y colisiones]
+    H --> I[Construir datos del siguiente cuadro]
+    I --> J[Enviar cuadro al display driver]
+    J --> K[Enviar eventos al modulo de audio I2S]
+    K --> L{¿Terminar?}
+    L -->|No| E
+    L -->|Si| M[Regresar al menu]
 ```
 
 - Carga de datos: Cargar los recursos necesarios desde la memoria.
@@ -135,7 +105,26 @@ flowchart TD
 - Video: Actualizar los elementos graficos.
 - Audio: Reproducir los sonidos del juego.
 
-## Referencias
+## Manejo de errores
 
-- https://docs.espressif.com/projects/esp-idf/en/v4.4/esp32/api-guides/error-handling.html
-- https://learn.microsoft.com/en-us/windows-hardware/drivers/whea/components-of-the-windows-hardware-error-architecture
+Cada modulo debe informar si una operación termino correctamente o si ocurrio un error. En caso de fallo, se identifica el módulo, el código y la operación afectada.
+
+Los errores pueden ser recuperables o críticos. Los recuperables permiten reintentar o volver al menú, los errores críticos detienen la operación y muestran una pantalla azul con la información del error. Si un módulo no responde a tiempo, se considera un error de comunicacion.
+
+```mermaid
+flowchart TD
+    A[Iniciar operacion] --> B{Respuesta del modulo}
+    B -->|Valida| C[Continuar operacion]
+    B -->|Error| D[Recibir codigo y origen del error]
+    B -->|Sin respuesta| E[Generar error de comunicacion]
+    D --> F{Tipo de error}
+    E --> F
+    F -->|Recuperable| G[Reintentar o volver al menu]
+    F -->|Critico| H[Detener operacion]
+    H --> J[Pantallazo azul]
+    J --> K[Mostrar el Error y de donde]
+    K --> L{Reiniciar consola}
+    L -->|Si| M[Reiniciar]
+    L -->|No| N[Esperar]
+```
+
