@@ -127,4 +127,3 @@ flowchart TD
     L -->|Si| M[Reiniciar]
     L -->|No| N[Esperar]
 ```
-
