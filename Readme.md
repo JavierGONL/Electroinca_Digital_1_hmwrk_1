@@ -12,17 +12,13 @@ flowchart TD
     C --> D[Entrada PS2 del usuario ]
     D --> E{Menu Start}
     E --> I[Juego]
-    E -->|Opciones| F[Menu de configuracion]
+    E <-->|Opciones| F[Ver de configuración]
     I --> |Termino juego| E
-    F --> H[Modificar brillo o controles] -->E
 ```
 
 ## Diagrama de flujo de la consola
 
-Este flujo representa la secuencia completa del sistema desde el encendido. Las
-pruebas del POST pueden ejecutarse en paralelo, pero el sistema central espera
-la respuesta de todos los módulos antes de habilitar el menú.
-
+Este diagrama especifica un poco mejor cada paso desde el encendido de la consola hasta la ejecucion del juego.
 ```mermaid
 flowchart TD
     A[Encender consola]
@@ -108,7 +104,7 @@ flowchart TD
 
 Cada modulo debe informar si una operación termino correctamente o si ocurrio un error. En caso de fallo, se identifica el módulo, el código y la operación afectada.
 
-Los errores pueden ser recuperables o críticos. Los recuperables permiten reintentar o volver al menú, los errores críticos detienen la operación y muestran una pantalla azul con la información del error. Si un módulo no responde a tiempo, se considera un error de comunicacion.
+Los errores pueden ser recuperables o críticos. Los recuperables permiten reintentar o volver al menú, los errores críticos detienen la operacion y muestran un pantallazo azul con la información del error. si un módulo no responde a tiempo se considera un error de comunicacion.
 
 ```mermaid
 flowchart TD
@@ -121,7 +117,7 @@ flowchart TD
     F -->|Recuperable| G[Reintentar o volver al menu]
     F -->|Critico| H[Detener operacion]
     H --> J[Pantallazo azul]
-    J --> K[Mostrar el Error y de donde]
+    J --> K[Mostrar el error y de donde]
     K --> L{Reiniciar consola}
     L -->|Si| M[Reiniciar]
     L -->|No| N[Esperar]
