@@ -40,21 +40,20 @@ flowchart TD
     H -->|Si| M[Input de Validacion Control]
     M --> N{Menu Principal}
     N -->|Jugar| O[Solicitar recursos del juego]
-    N -->|Opciones| P[Configurar consola por I2C]
-    O --> Q[Cargar datos de Flash a RAM]
+    N <-->|Opciones| P[Ver Configuracion]
+    O --> Q[Cargar datos del juego]
     Q --> R[Inicializar estado del juego]
     R --> S[Ejecutar game loop]
     S --> T{Terminar juego}
     F --> H
     G --> H
-    P --> M
     T -->|No| S
     T -->|Si| M
 ```
 
 ## Verificaciones de los sistemas al encender
 
-Al encender el sistema, se ejecuta un diagnostico al hardware mientras se carga la secuencia una intro tipo ps3.
+Al encender el sistema, se ejecuta un diagnostico al hardware mientras se carga la secuencia una intro tipo ps2 y pues eso al final es una presentacion de power point con sonido.
 
 [Ejemplo intro](https://www.youtube.com/watch?v=Ywh-aIfEcew)
 
@@ -72,7 +71,7 @@ cada test lo hace el grupo correspondiente y en el software al iniciarse simplem
 
 
 ### Menu
-Interfaz de usuario en estado de espera para seleccionar juegos o ajustar parámetros de la consola.
+Interfaz de usuario en estado de espera para seleccionar juegos e ir a ver los parámetros de la consola.
 
 <p align="center">
     <img src="Imagenes/Menu_Principal.png" alt="Menú principal">
